@@ -19,10 +19,10 @@ See also my working examples on jsfiddle - http://jsfiddle.net/dukeytoo/02ohnth4
 I welcome all feedback/corrections.  The examples are all as good as I could make them, but I'm sure that there are ways they can be improved, and other examples that
 would be useful.  Log an issue or do a pull request to let me know.
 
-### Example work
+### Example task
 
 In all examples, the work is the euivalent of the following synchronous code:
-```
+```JavaScript
 function syncWork(input) {
     var output = (input || "");
     for (var i = 0; i < 10; i++) {
@@ -32,10 +32,10 @@ function syncWork(input) {
 }
 ```
 
-For example, ```syncWork("Example: ", 10)``` would output the following:  ```Example: 0 1 2 3 4 5 6 7 8 9```.  Generally, the async examples output in random order.
+For example, ```syncWork("Example: ", 10)``` would output the following:  ```Example: 0 1 2 3 4 5 6 7 8 9```.
 
 An equivalent promisified async work-task is:
-```
+```JavaScript
 function doTheWork(input, i) {
     //normal async work will probably have its own promise, but we need to create our own:
     return new Promise(function (resolve, reject) {
@@ -51,7 +51,7 @@ example you would do something naturally async, like an Ajax call, and return a 
 
 #### Async loop ordered
 
-```
+```JavaScript
 function asyncLoopOrdered(someInput, times) {
     var iterations = [];
     for (var i = 0; i < times; i++) {
@@ -71,7 +71,7 @@ The work outputs in the requested order because ```Promise.all``` returns the re
 
 #### Async loop unordered
 
-```
+```JavaScript
 function asyncLoopRandom(someInput, times) {
     var finalOutput = someInput;
     var iterations = [];
@@ -88,13 +88,13 @@ function asyncLoopRandom(someInput, times) {
 }
 ```
 
-To call, we would do something like: ```asyncLoopRandom("Example: ", 10).then(function(result) { console.log(result); });``` which would output ```Example: 4 5 9 0 7 8 1 6 2 3```.
+To call, we would do something like: ```asyncLoopRandom("Example: ", 10).then(function(result) { console.log(result); });``` which could output ```Example: 4 5 9 0 7 8 1 6 2 3```.
 
 This example works the same as the previous one, but it collects the output as it becomes ready.
 
 #### Sync loop
 
-```
+```JavaScript
 function seqLoopReduce(someInput, times) {
     var arr = new Array(times);
     for (var i = 1; i < times; i++) {
@@ -121,7 +121,7 @@ recursion, which would be more code, harder to read and less efficient.
 In order to do any type of throttling, we need a way to limit ourselves.  What better way than a simple object that maintains a "pool" of a certain size, and returns
 promises that resolve when there is an available resource in the pool?  That is pretty easy to write:
 
-```
+```JavaScript
 function resourceLimiter(numResources) {
     var my = {
         available: numResources,
@@ -166,7 +166,7 @@ The throttling examples below shows how to use the resource limiter.
 
 #### Throttled Loop, Max in-process
 
-```
+```JavaScript
 function maxInProcessThrottle(someInput, times, limit) {
     var limiter = resourceLimiter(limit);  //max "limit" in-process at a time
     var finalOutput = someInput;
@@ -205,7 +205,7 @@ The overall effect is that the tasks are resource-starved and have to wait for t
 
 #### Throttled Loop, Max requests per Period
 
-```
+```JavaScript
 function maxRequestsPerPeriodThrottle(someInput, times, limit, ms) {
     //the way it works is that the timer gives back a resource every time it triggers,
     //and the tasks take them whenever they can.
@@ -249,7 +249,7 @@ the resource and the next task can still start.  We see how to address that in t
 
 #### Throttled Loop, Max in-process per Period
 
-```
+```JavaScript
 function maxInProcessPerPeriodThrottle(someInput, times, limit, ms) {
     //a task will only start executing when there is *both* a time and a process resource available.
     //The effective limit is whichever one of them is in the least supply.  For long-running tasks the
