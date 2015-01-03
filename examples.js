@@ -22,49 +22,6 @@ function doTheWork(input, i) {
     });
 }
 
-/**
- * Loops sequentially over an async function named doTheWork.  This is useful
- * when each iteration depends on some result from the previous one.  It is the slowest async loop,
- * so only use it when absolutely necessary.
- *
- * This is the simplest variant, but it outputs the indexes in descending order.  Use it if your work
- * function does not care about the index, or only needs to know when its on the last item.
- **/
-function seqLoopDescending(someInput, times) {
-    return new Promise(function (resolve, reject) {
-        if (times == 0) {
-            resolve(someInput);
-        } else {
-            doTheWork(someInput, times - 1).then(function (workOutput) {
-                resolve(seqLoopDescending(workOutput, times - 1));
-            })
-        }
-    });
-}
-
-/**
- * Loops sequentially over an async function named doTheWork.  This is useful
- * when each iteration depends on some result from the previous one.  It is the slowest async loop,
- * so only use it when absolutely necessary.
- *
- * This is a more complex variant, in order to output the indexes in ascending order
- **/
-function seqLoopAscending(someInput, times) {
-    var limit = times;
-
-    var seqLoop = function (someInput, times) {
-        return new Promise(function (resolve, reject) {
-            if (times == 0) {
-                resolve(someInput);
-            } else {
-                doTheWork(someInput, limit - times).then(function (workOutput) {
-                    resolve(seqLoop(workOutput, times - 1));
-                })
-            }
-        });
-    };
-    return seqLoop(someInput, times);
-}
 
 /**
  * Loops randomly over an async function named doTheWork.  This is useful
