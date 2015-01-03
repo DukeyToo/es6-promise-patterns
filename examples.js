@@ -31,18 +31,13 @@ function doTheWork(input, i) {
  * This variant shows the output in the original requested order.
  **/
 function asyncLoopOrdered(someInput, times) {
-    return new Promise(function (resolve, reject) {
-        var iterations = [];
-        for (var i = 0; i < times; i++) {
-            iterations.push(doTheWork("", i));
-        }
+    var iterations = [];
+    for (var i = 0; i < times; i++) {
+        iterations.push(doTheWork("", i));
+    }
 
-        Promise.all(iterations).then(function (output) {
-            resolve(someInput + output.join("")); //add the output all at once when all have completed
-        }).
-        catch (function (err) {
-            reject(err);
-        });
+    return Promise.all(iterations).then(function(output) {
+        return someInput + output.join(""); //add the output all at once when all have completed
     });
 }
 
@@ -54,23 +49,17 @@ function asyncLoopOrdered(someInput, times) {
  * This variant shows the output in the order it completes, i.e. random.
  **/
 function asyncLoopRandom(someInput, times) {
-    return new Promise(function (resolve, reject) {
-        var finalOutput = someInput;
-        var iterations = [];
-        for (var i = 0; i < times; i++) {
-            var p = doTheWork("", i);
-            iterations.push(p);
-            p.then(function (output) {
-                finalOutput += output; //add the output as it becomes ready
-            });
-        }
-
-        Promise.all(iterations).then(function (output) {
-            resolve(finalOutput);
-        }).
-        catch (function (err) {
-            reject(err);
+    var finalOutput = someInput;
+    var iterations = [];
+    for (var i = 0; i < times; i++) {
+        var p = doTheWork("", i).then(function(output) {
+            finalOutput += output; //add the output as it becomes ready
         });
+        iterations.push(p);
+    }
+
+    return Promise.all(iterations).then(function (output) {
+        return finalOutput;
     });
 }
 
