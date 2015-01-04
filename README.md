@@ -16,8 +16,10 @@ The examples I have so far (see examples.js):
 
 See also my working examples on jsfiddle - http://jsfiddle.net/dukeytoo/02ohnth4/
 
-I welcome all feedback/corrections.  The examples are all as good as I could make them, but I'm sure that there are ways they can be improved, and other examples that
+There are upcoming changes in browsers and libraries that will support more natural looping over async tasks, but until then
+this is my go-to place for promise-based asynchronous loops.  I welcome all feedback/corrections.  The examples are all as good as I could make them, but I'm sure that there are ways they can be improved, and other examples that
 would be useful.  Log an issue or do a pull request to let me know.
+
 
 ### Example task
 
