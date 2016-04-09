@@ -14,8 +14,8 @@ function syncWork(input) {
  **/
 function doTheWork(input, i) {
     //normal async work will probably have its own promise, but we need to create our own:
-    return new Promise(function (resolve, reject) {
-        setTimeout(function () {
+    return new Promise(function(resolve, reject) {
+        setTimeout(function() {
             var output = (input || "") + i + " ";
             resolve(output);
         }, Math.floor(Math.random() * 200) + 1)
@@ -58,7 +58,7 @@ function asyncLoopRandom(someInput, times) {
         iterations.push(p);
     }
 
-    return Promise.all(iterations).then(function (output) {
+    return Promise.all(iterations).then(function(output) {
         return finalOutput;
     });
 }
@@ -76,8 +76,8 @@ function seqLoopReduce(someInput, times) {
         arr[i] = i; //we need to populate the array because Array.reduce will ignore empty elements
     }
 
-    return arr.reduce(function (prev, curr) {
-        return prev.then(function (val) {
+    return arr.reduce(function(prev, curr) {
+        return prev.then(function(val) {
             return doTheWork(val, curr); //curr = current arr value, val = return val from last iteration
         });
     }, doTheWork(someInput, 0));
@@ -91,7 +91,7 @@ function seqLoopReduce(someInput, times) {
  * exceed the number of processor cores available to do the work.
  **/
 function maxInProcessThrottle(someInput, times, limit) {
-    var limiter = resourceLimiter(limit);  //max "limit" in-process at a time
+    var limiter = resourceLimiter(limit); //max "limit" in-process at a time
     var finalOutput = someInput;
     var tasks = new Array(times);
 
@@ -104,7 +104,7 @@ function maxInProcessThrottle(someInput, times, limit) {
         }
     }
 
-    for (var i=0; i<times; i++) {
+    for (var i = 0; i < times; i++) {
         tasks[i] = limiter.take().then(executeTask(i));
     }
 
@@ -126,10 +126,10 @@ function maxInProcessThrottle(someInput, times, limit) {
 function maxRequestsPerPeriodThrottle(someInput, times, limit, ms) {
     //the way it works is that the timer gives back a resource every time it triggers,
     //and the tasks take them whenever they can.
-    var limiter = resourceLimiter(limit);  //max "limit" in-process at a time
+    var limiter = resourceLimiter(limit); //max "limit" in-process at a time
     var timer = setInterval(function() {
-        for (var i=0; i<limit; i++)
-            limiter.give();  //give back "limit" resources every "ms" ms
+        for (var i = 0; i < limit; i++)
+            limiter.give(); //give back "limit" resources every "ms" ms
     }, ms);
 
     var finalOutput = someInput;
@@ -143,7 +143,7 @@ function maxRequestsPerPeriodThrottle(someInput, times, limit, ms) {
         }
     }
 
-    for (var i=0; i<times; i++) {
+    for (var i = 0; i < times; i++) {
         tasks[i] = limiter.take().then(executeTask(i));
     }
 
@@ -164,10 +164,10 @@ function maxInProcessPerPeriodThrottle(someInput, times, limit, ms) {
     //process resource will be in short supply, and for short running tasks the time resource will be a constraint.
 
     var processLimiter = resourceLimiter(limit); //max "limit" in-process at a time.
-    var timeLimiter = resourceLimiter(limit);  //limits to start "limit" times per "ms" ms.
+    var timeLimiter = resourceLimiter(limit); //limits to start "limit" times per "ms" ms.
     var timer = setInterval(function() {
-        for (var i=0; i<limit; i++)
-            timeLimiter.give();  //give back the timed resource every "ms" ms
+        for (var i = 0; i < limit; i++)
+            timeLimiter.give(); //give back the timed resource every "ms" ms
     }, ms);
 
     var finalOutput = someInput;
@@ -182,7 +182,7 @@ function maxInProcessPerPeriodThrottle(someInput, times, limit, ms) {
         }
     }
 
-    for (var i=0; i<times; i++) {
+    for (var i = 0; i < times; i++) {
         tasks[i] = Promise.all([timeLimiter.take(), processLimiter.take()]).then(executeTask(i));
     }
 
@@ -201,7 +201,7 @@ function resourceLimiter(numResources) {
         max: numResources
     };
 
-    var futures = [];  //array of callbacks to trigger the promised resources
+    var futures = []; //array of callbacks to trigger the promised resources
 
     /*
      * takes a resource.  returns a promises that resolves when the resource is available.
@@ -209,9 +209,11 @@ function resourceLimiter(numResources) {
      */
     my.take = function() {
         if (my.available > 0) {
+            // no need to wait - take a slot and resolve immediately      
             my.available -= 1;
             return Promise.resolve();
         } else {
+            // need to wait - return promise that resolves when wait is over
             var p = new Promise(function(resolve, reject) {
                 futures.push(resolve);
             });
@@ -220,15 +222,33 @@ function resourceLimiter(numResources) {
         }
     }
 
+    var emptyPromiseResolver;
+    var emptyPromise = new Promise(function(resolve, reject) {
+        emptyPromiseResolver = resolve;
+    });
+
     /*
      * returns a resource to the pool
      */
     my.give = function() {
         if (futures.length) {
-            my.available += 1;
-            var future = futures.shift();
+            // we have a task waiting - execute it
+            var future = futures.shift(); // FIFO
             future();
+        } else {
+            // no tasks waiting - increase the available count
+            my.available += 1;
+            if (my.available === my.max) {
+                emptyPromiseResolver('Queue is empty')
+            }
         }
+    }
+
+    /* 
+     * Returns a promise that resolves when the queue is empty
+     */
+    my.emptyPromise = function() {
+        return emptyPromise;
     }
 
     return my;
