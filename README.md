@@ -130,7 +130,7 @@ function resourceLimiter(numResources) {
         max: numResources
     };
 
-    var futures = [];  //array of callbacks to trigger the promised resources
+    var futures = []; //array of callbacks to trigger the promised resources
 
     /*
      * takes a resource.  returns a promises that resolves when the resource is available.
@@ -138,9 +138,11 @@ function resourceLimiter(numResources) {
      */
     my.take = function() {
         if (my.available > 0) {
+            // no need to wait - take a slot and resolve immediately      
             my.available -= 1;
             return Promise.resolve();
         } else {
+            // need to wait - return promise that resolves when wait is over
             var p = new Promise(function(resolve, reject) {
                 futures.push(resolve);
             });
@@ -149,15 +151,33 @@ function resourceLimiter(numResources) {
         }
     }
 
+    var emptyPromiseResolver;
+    var emptyPromise = new Promise(function(resolve, reject) {
+        emptyPromiseResolver = resolve;
+    });
+
     /*
      * returns a resource to the pool
      */
     my.give = function() {
         if (futures.length) {
-            my.available += 1;
-            var future = futures.shift();
+            // we have a task waiting - execute it
+            var future = futures.shift(); // FIFO
             future();
+        } else {
+            // no tasks waiting - increase the available count
+            my.available += 1;
+            if (my.available === my.max) {
+                emptyPromiseResolver('Queue is empty')
+            }
         }
+    }
+
+    /* 
+     * Returns a promise that resolves when the queue is empty
+     */
+    my.emptyPromise = function() {
+        return emptyPromise;
     }
 
     return my;
